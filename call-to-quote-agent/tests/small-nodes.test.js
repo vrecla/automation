@@ -16,7 +16,7 @@ test('resolveOrg finds an exact (case-insensitive) match, else asks to create', 
 
 test('person payload includes only the contact fields we have', () => {
   const p = buildPersonPayload({ caller_name: 'Sarah', caller_email: null, caller_phone: '0412345678' }, 7);
-  assert.deepStrictEqual(p, { name: 'Sarah', org_id: 7, phone: [{ value: '0412345678', primary: true, label: 'work' }] });
+  assert.deepStrictEqual(p, { name: 'Sarah', org_id: 7, phones: [{ value: '0412345678', primary: true, label: 'work' }] });
   assert.strictEqual(buildPersonPayload({ caller_name: null }, 7).name, 'Unknown caller');
 });
 
@@ -36,4 +36,13 @@ test('error alert is readable', () => {
   assert.match(t, /Claude Extract/);
   assert.match(t, /401 unauthorized/);
   assert.match(formatError({}), /unknown workflow/);
+});
+
+test('regression (Pipedrive API v2): person payload uses emails/phones and never the v1 names', () => {
+  const p = buildPersonPayload({ caller_name: 'Sarah', caller_email: 'sarah@example.com', caller_phone: '0412345678' }, 7);
+  assert.deepStrictEqual(Object.keys(p).sort(), ['emails', 'name', 'org_id', 'phones']);
+  assert.ok(!('email' in p) && !('phone' in p), 'v1 field names would be silently dropped by v2');
+  assert.strictEqual(p.emails[0].value, 'sarah@example.com');
+  assert.strictEqual(p.emails[0].primary, true);
+  assert.strictEqual(typeof p.org_id, 'number', 'v2 no longer coerces string ids');
 });

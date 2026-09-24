@@ -50,7 +50,7 @@ test('clean call: every node runs and produces the exact records we expect', () 
   const c = run('Collect Org ID', {}, outputs);
   assert.strictEqual(c.org_id, 555);
   assert.strictEqual(c.person_payload.org_id, 555);
-  assert.strictEqual(c.person_payload.email[0].value, 'sarah.nguyen@harbourview-bc.example');
+  assert.strictEqual(c.person_payload.emails[0].value, 'sarah.nguyen@harbourview-bc.example');
 
   assert.strictEqual(run('Decide', { Decision: 'Approve', submittedAt: '2026-09-24T00:00:00Z', formMode: 'production' }, outputs).decision, 'approved');
 });

@@ -70,6 +70,14 @@ flowchart TD
 8. Click **Listen for test event** on the webhook node, then run:
    `node scripts/send-sample.js sample-transcripts/01-clean-routine.json`
 
+## Pipedrive API version
+
+This uses **Pipedrive API v2** for deals, organisations, persons, activities and search (the v1 versions went out of support on 1 Aug 2026). Notes have no v2 endpoint, so `Add Draft Note` / `Add Rejection Note` use `/v1/notes`, which is not on Pipedrive's deprecation list. v2 changed a few things this workflow depends on:
+- Person contact fields are `emails` / `phones` (v1 used `email` / `phone`). Sending the old names would silently drop the client's contact details, and a regression test guards this.
+- v2 no longer coerces strings to numbers, so ids and the deal `value` are sent as numbers.
+- Activities: `person_id` is read-only in v2 (set via `participants`). This workflow only sets `deal_id`.
+- Search responses keep the same shape; pagination is cursor-based (this workflow only uses `limit`).
+
 ## Sample calls
 
 | File | Expected result |
@@ -85,8 +93,9 @@ The JS lives in `code/*.js`, not in the JSON. Edit there, then `npm run build` t
 
 ## Verified vs. not yet verified
 
-- **Verified (50 automated tests):** all validation, pricing, dedupe/org logic, approval logic, graph structure (no orphan nodes, safety gates cannot be bypassed), and the embedded Code-node scripts run against a fake n8n runtime.
-- **Not yet verified:** a live run in n8n against real Pipedrive, Claude and Slack. Before relying on it, check on your own instance: node parameter compatibility on your n8n version, the Pipedrive `x-api-token` header, the response shape of Pipedrive search, and that Claude accepts the model string in `Config`.
+- **Verified (53 automated tests):** all validation, pricing, dedupe/org logic, approval logic, graph structure (no orphan nodes, safety gates cannot be bypassed), and the embedded Code-node scripts run against a fake n8n runtime.
+- **Verified live (v1 version):** full flow through approval, duplicate stop, review stops for samples 02 and 03. **The v2 migration itself has not been run live yet**; re-run sample 01 with a fresh call id after importing.
+- **Not yet verified:** Before relying on it, check on your own instance: node parameter compatibility on your n8n version, the Pipedrive `x-api-token` header, the response shape of Pipedrive search, and that Claude accepts the model string in `Config`.
 
 ## Known limitations / next steps
 

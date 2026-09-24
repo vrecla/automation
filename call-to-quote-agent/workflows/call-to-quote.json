@@ -72,7 +72,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://api.pipedrive.com/v1/deals/search",
+        "url": "https://api.pipedrive.com/api/v2/deals/search",
         "options": {
           "timeout": 30000
         },
@@ -297,7 +297,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://api.pipedrive.com/v1/organizations/search",
+        "url": "https://api.pipedrive.com/api/v2/organizations/search",
         "options": {
           "timeout": 30000
         },
@@ -391,7 +391,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.pipedrive.com/v1/organizations",
+        "url": "https://api.pipedrive.com/api/v2/organizations",
         "options": {
           "timeout": 30000
         },
@@ -420,7 +420,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "// NODE: \"Collect Org ID\"\n// Purpose: two branches (org existed / org created) rejoin here. We read the id from whichever branch ran,\n// and build the Pipedrive person payload.\n\nfunction buildPersonPayload(data, orgId) {\n  const payload = { name: data.caller_name || 'Unknown caller', org_id: orgId };\n  if (data.caller_email) payload.email = [{ value: data.caller_email, primary: true, label: 'work' }];\n  if (data.caller_phone) payload.phone = [{ value: data.caller_phone, primary: true, label: 'work' }];\n  return payload;\n}\n\nif (typeof module !== 'undefined' && module.exports) module.exports = { buildPersonPayload };\n\nif (typeof $input !== 'undefined') {\n  const ctx = $('Resolve Org').first().json;\n  // $('Create Org') is only touched when that branch actually ran.\n  const orgId = ctx.needsCreate ? $('Create Org').first().json.data.id : ctx.org_id;\n  return [{ json: { ...ctx, org_id: orgId, person_payload: buildPersonPayload(ctx.data, orgId) } }];\n}\n"
+        "jsCode": "// NODE: \"Collect Org ID\"\n// Purpose: two branches (org existed / org created) rejoin here. We read the id from whichever branch ran,\n// and build the Pipedrive person payload.\n// Pipedrive API v2 renamed the person fields `email` -> `emails` and `phone` -> `phones` (arrays of {value,label,primary}).\n// Sending the v1 names would silently drop the client's contact details, so a test guards this.\n\nfunction buildPersonPayload(data, orgId) {\n  const payload = { name: data.caller_name || 'Unknown caller', org_id: orgId };\n  if (data.caller_email) payload.emails = [{ value: data.caller_email, primary: true, label: 'work' }];\n  if (data.caller_phone) payload.phones = [{ value: data.caller_phone, primary: true, label: 'work' }];\n  return payload;\n}\n\nif (typeof module !== 'undefined' && module.exports) module.exports = { buildPersonPayload };\n\nif (typeof $input !== 'undefined') {\n  const ctx = $('Resolve Org').first().json;\n  // $('Create Org') is only touched when that branch actually ran.\n  const orgId = ctx.needsCreate ? $('Create Org').first().json.data.id : ctx.org_id;\n  return [{ json: { ...ctx, org_id: orgId, person_payload: buildPersonPayload(ctx.data, orgId) } }];\n}\n"
       },
       "id": "1ba1c89e-9c53-85c8-0c0d-7a000c1f31e2",
       "name": "Collect Org ID",
@@ -434,7 +434,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.pipedrive.com/v1/persons",
+        "url": "https://api.pipedrive.com/api/v2/persons",
         "options": {
           "timeout": 30000
         },
@@ -462,7 +462,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.pipedrive.com/v1/deals",
+        "url": "https://api.pipedrive.com/api/v2/deals",
         "options": {
           "timeout": 30000
         },
@@ -627,7 +627,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.pipedrive.com/v1/activities",
+        "url": "https://api.pipedrive.com/api/v2/activities",
         "options": {
           "timeout": 30000
         },

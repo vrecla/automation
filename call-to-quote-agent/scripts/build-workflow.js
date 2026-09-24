@@ -75,7 +75,10 @@ function http({ method = 'GET', url, qs, body, headers, retry = false, timeout =
 // POSTs that create records (org/person/deal/note) are never blindly retried: a retry could create duplicates.
 const RETRY = { retryOnFail: true, maxTries: 3, waitBetweenTries: 3000 };
 
-const PD = 'https://api.pipedrive.com/v1';
+// Pipedrive API v2 for deals / organisations / persons / activities (their v1 versions are out of support since 1 Aug 2026).
+// Notes have no v2 endpoint, so they stay on /v1/notes, which is not on Pipedrive's deprecation list.
+const PD = 'https://api.pipedrive.com/api/v2';
+const PD_NOTES = 'https://api.pipedrive.com/v1/notes';
 const dealCtx = "$('Collect Org ID').first().json";
 
 // =====================================================================
@@ -159,7 +162,7 @@ function buildMain() {
 
   w.add('Add Draft Note', 'n8n-nodes-base.httpRequest', 4.2,
     http({
-      method: 'POST', url: `${PD}/notes`,
+      method: 'POST', url: PD_NOTES,
       body: `={{ JSON.stringify({ content: ${dealCtx}.quote_html, deal_id: $json.data.id }) }}`,
     }),
     pos(), { credentials: PIPEDRIVE_CRED });
@@ -199,7 +202,7 @@ function buildMain() {
 
   w.add('Add Rejection Note', 'n8n-nodes-base.httpRequest', 4.2,
     http({
-      method: 'POST', url: `${PD}/notes`,
+      method: 'POST', url: PD_NOTES,
       body: "={{ JSON.stringify({ content: '<b>Draft quote NOT approved</b> (' + $json.decision + '). Needs human follow-up.', deal_id: $('Create Deal').first().json.data.id }) }}",
     }),
     [x + X, 300 + 220], { credentials: PIPEDRIVE_CRED });

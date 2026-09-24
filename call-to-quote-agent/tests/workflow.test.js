@@ -130,3 +130,27 @@ test('no node in the workflow appends query strings to resume URLs', () => {
   const text = JSON.stringify(main);
   assert.ok(!/resumeUrl\s*\+\s*['"`]\?/.test(text));
 });
+
+// ---- Pipedrive API version guard ----
+const pipedriveUrls = () => main.nodes
+  .filter((n) => n.type === 'n8n-nodes-base.httpRequest' && /pipedrive\.com/.test(n.parameters.url))
+  .map((n) => ({ name: n.name, url: n.parameters.url }));
+
+test('Pipedrive calls use API v2, except notes (no v2 endpoint exists for notes)', () => {
+  const calls = pipedriveUrls();
+  assert.ok(calls.length >= 8);
+  for (const { name, url } of calls) {
+    if (/notes$/.test(url)) assert.strictEqual(url, 'https://api.pipedrive.com/v1/notes', `${name} notes URL`);
+    else assert.match(url, /^https:\/\/api\.pipedrive\.com\/api\/v2\/(deals|organizations|persons|activities)(\/search)?$/, `${name} must use v2`);
+  }
+  assert.deepStrictEqual(calls.filter((c) => /\/v1\//.test(c.url)).map((c) => c.name).sort(), ['Add Draft Note', 'Add Rejection Note']);
+});
+
+test('v2 requests keep numeric ids and send a numeric deal value (v2 no longer coerces strings)', () => {
+  const deal = main.nodes.find((n) => n.name === 'Create Deal').parameters.jsonBody;
+  assert.match(deal, /value: .*ex_gst_cents \/ 100/);
+  assert.match(deal, /person_id: \$json\.data\.id/);
+  const activity = main.nodes.find((n) => n.name === 'Create Follow-up Activity').parameters.jsonBody;
+  assert.match(activity, /deal_id: \$\('Create Deal'\)\.first\(\)\.json\.data\.id/);
+  assert.doesNotMatch(activity, /person_id/, 'v2 activities: person_id is read-only');
+});
