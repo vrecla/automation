@@ -1,0 +1,12 @@
+{
+  "name": "call-to-quote-agent",
+  "version": "1.0.0",
+  "description": "n8n workflow: call transcript -> Claude extraction -> validation -> deterministic quote -> Pipedrive -> human approval",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-workflow.js",
+    "test": "node --test",
+    "send": "node scripts/send-sample.js"
+  },
+  "engines": { "node": ">=20" }
+}

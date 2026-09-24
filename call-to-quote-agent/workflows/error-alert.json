@@ -1,0 +1,117 @@
+{
+  "name": "Call to Quote - Error Alert",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d9e9b138-63c8-cd76-f0a0-d0cf8da707c7",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f0",
+              "name": "slackWebhookUrl",
+              "value": "PASTE_SLACK_INCOMING_WEBHOOK_URL",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "f708cda8-d7b3-3a6e-1283-faae6f4c06f0",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// NODE (error workflow): \"Format Alert\"\n// Purpose: turn n8n's Error Trigger payload into a readable Slack message.\n\nfunction formatError(e) {\n  const wf = (e.workflow && e.workflow.name) || 'unknown workflow';\n  const ex = e.execution || {};\n  const msg = (ex.error && ex.error.message) || 'no message';\n  return [\n    `:rotating_light: *${wf}* failed`,\n    `Node: ${ex.lastNodeExecuted || 'unknown'}`,\n    `Error: ${msg}`,\n    `Execution: ${ex.url || ex.id || 'unknown'}`,\n  ].join('\\n');\n}\n\nif (typeof module !== 'undefined' && module.exports) module.exports = { formatError };\n\nif (typeof $input !== 'undefined') {\n  return [{ json: { text: formatError($input.first().json) } }];\n}\n"
+      },
+      "id": "b49ad5a9-c15a-fb7f-3724-98c897b898da",
+      "name": "Format Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.slackWebhookUrl }}",
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.text }) }}"
+      },
+      "id": "bd48e922-6b8c-c3c8-15a0-853f9b98830a",
+      "name": "Slack - Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Format Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Alert": {
+      "main": [
+        [
+          {
+            "node": "Slack - Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
